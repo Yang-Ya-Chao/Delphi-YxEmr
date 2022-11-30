@@ -1,0 +1,233 @@
+----申请单锁表信息-解决收费时并发问题
+USE [YXHIS]
+IF OBJECT_ID('[TBSQDLockInfo]','u') is NULL
+begin
+	CREATE TABLE [dbo].[TBSQDLockInfo](
+	CBH VARCHAR(50) NOT NULL,
+	DJLRQ DATETIME NOT NULL,
+	CONSTRAINT [PK_TBSQDLockInfo] PRIMARY KEY CLUSTERED
+	(
+	[CBH] ASC,
+	[DJLRQ] ASC
+	)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	) ON [PRIMARY]
+end
+go
+----医嘱本状态回写需要增加索引-解决高并发计费时死锁问题
+USE YSGZZ
+DECLARE AAA CURSOR FOR SELECT name FROM sysobjects WHERE name LIKE 'TBYZBYZYLBQ%' and xtype='u'
+DECLARE @name varchar(40)
+DECLARE @CSQL varchar(200)
+OPEN AAA
+FETCH NEXT FROM AAA INTO @name
+WHILE (@@FETCH_STATUS  <> -1)
+BEGIN
+IF (@@FETCH_STATUS  <> -2)
+BEGIN 
+  IF NOT EXISTS(SELECT * FROM sys.indexes WHERE  OBJECT_ID=OBJECT_ID(@name) AND name='IX_' +@name + '_CZYHCSQDBH' )
+    EXEC ('CREATE NONCLUSTERED INDEX IX_' +@name + '_CZYHCSQDBH  ON '+@name+' ([CZYH],[CSQDBH])')
+  IF NOT EXISTS(SELECT * FROM sys.indexes WHERE  OBJECT_ID=OBJECT_ID(@name) AND name='IX_' +@name + '_CZYHCSQDBHIFYZT' )
+    EXEC ('CREATE NONCLUSTERED INDEX IX_' +@name + '_CZYHCSQDBHIFYZT  ON '+@name+' ([CZYH],[CSQDBH],[IFYZT])')
+END
+FETCH NEXT FROM AAA INTO @name
+END
+CLOSE AAA
+DEALLOCATE AAA
+go
+----取消报告时回写取消时间--住院
+USE YSGZZ
+DECLARE CurTable CURSOR FOR SELECT name FROM sysobjects where (name like 'TBzyj%bgdxx%') AND TYPE='U'
+OPEN CurTable
+DECLARE @TBNAME VARCHAR(30)
+FETCH NEXT FROM CurTable INTO @TBNAME
+WHILE (@@FETCH_STATUS <> -1)
+BEGIN
+if not exists(select * from syscolumns where name='DQXRQ' and id=object_id(@tbname))
+  EXEC('alter TABLE ' + @TBNAME + ' Add DQXRQ DATETIME')
+FETCH NEXT FROM CurTable INTO @TBNAME
+END
+CLOSE CurTable
+DEALLOCATE CurTable
+go
+----取消报告时回写取消时间--门诊
+USE YSGZZ2022
+DECLARE CurTable CURSOR FOR SELECT name FROM sysobjects where name like 'TB%j%bgdxx%' AND TYPE='U'
+OPEN CurTable
+DECLARE @TBNAME VARCHAR(30)
+FETCH NEXT FROM CurTable INTO @TBNAME
+WHILE (@@FETCH_STATUS <> -1)
+BEGIN
+if not exists(select * from syscolumns where name='DQXRQ' and id=object_id(@tbname))
+EXEC('alter TABLE ' + @TBNAME + ' Add DQXRQ DATETIME')
+FETCH NEXT FROM CurTable INTO @TBNAME
+END
+CLOSE CurTable
+DEALLOCATE CurTable
+go
+----检验状态回传记录表脚本
+USE YXHIS
+IF OBJECT_ID('[TBSQDStatus]','u') is NULL
+begin
+	CREATE table [dbo].[TBSQDStatus] (
+	/*
+	1:签收（登记）
+	3:样本作废
+	5:样本签收
+	7:样本拒签
+	11:取消作废
+	23:报告
+	*/
+	IID BigInt NOT NULL, --唯一ID
+	ICZLX INTEGER NOT NULL, --操作类型
+	CCZMC VARCHAR(200) NOT NULL,--操作名称
+	DCZRQ DATETIME NOT NULL,--操作时间
+	IBRLX Int NOT NULL,--病人类型（0门诊1住院）
+	CBRH VARCHAR(20) NOT NULL,--病人号
+	CSQDH VARCHAR(20) NOT NULL,--申请单号
+	CZTBM VARCHAR(100) NOT NULL,--组套编码
+	CTMH VARCHAR(100) NOT NULL,--条码号
+	DJLRQ DATETIME, --记录日期
+	CONSTRAINT [PK_TBSQDStatus] PRIMARY KEY CLUSTERED
+	(
+	IID ASC
+	)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	) ON [PRIMARY]
+END
+go
+----作废记录表脚本
+USE YXHIS
+IF OBJECT_ID('[TBSQDStatus]','u') is NULL
+begin
+	CREATE table [dbo].[TBSQDZFTMINFO] (
+	CBH VARCHAR(20) NOT NULL, --申请单号
+	CBRH VARCHAR(20) NOT NULL,--病人号
+	CZTBM VARCHAR(200) NOT NULL,--组套编码（组套=是否作废，多个组套使用|隔开）
+	IBRLX Int NOT NULL,--病人类型（0门诊1住院）
+	CTMH VARCHAR(100) NOT NULL, --条码号，多个使用|隔开
+	BCX bit NOT NULL, --护士站医嘱是否撤销 0未撤销，1：已撤销
+	DJLRQ DATETIME, --作废时间
+	DCXRQ DATETIME, --护士站医嘱撤销时间
+	CBZ VARCHAR(1000) NULL, --备注
+
+	CONSTRAINT [PK_TBSQDZFTMINFO] PRIMARY KEY CLUSTERED
+	(
+	[CBH] ASC,DJLRQ ASC
+	)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	) ON [PRIMARY]
+end
+go
+----添加EMR数据保存表格
+use YXHIS
+DECLARE @TBNAME VARCHAR(30)
+DECLARE @I int
+set @I=0
+while @I<10
+begin
+set @TBNAME='TBEMRInfo0'+CONVERT(varchar(10),@I)
+IF OBJECT_ID(@TBNAME,'u') is NULL
+begin
+	exec('CREATE TABLE '+@TBNAME+'(
+	CBH VARCHAR(100) NOT NULL,
+	CBRH VARCHAR(100) NOT NULL,
+	IBRLX INTEGER NOT NULL,
+	CXM VARCHAR(100) NULL,
+	DJLRQ DATETIME NULL,
+	CHTML VARCHAR(max) null
+	,CONSTRAINT [PK_'+@TBNAME+'] PRIMARY KEY CLUSTERED
+	(
+	[CBH] ASC
+	)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	) ON [PRIMARY]
+	')
+end
+set @I=@I+1
+end
+go
+----报告单数据统一数据表TBHisReportInfo
+USE YXHIS
+DECLARE @TBNAME VARCHAR(30)
+DECLARE @I INT
+DECLARE @J INT
+DECLARE @M INT
+DECLARE @CSQL VARCHAR(MAX)
+set @I=0
+while @I<10
+begin
+set @TBNAME='TBHisReportInfo0'+CONVERT(varchar(10),@I)
+set @J=1
+set @M=1
+IF OBJECT_ID(@TBNAME,'u') is NULL
+begin
+	SET @CSQL =
+	'CREATE TABLE '+@TBNAME+'(
+	IID BigInt NOT NULL,
+	CSQDH VARCHAR(100) NOT NULL,
+	CBRH VARCHAR(20) NOT NULL,
+	IBRLX INTEGER NOT NULL,
+	DJLRQ DATETIME NULL,
+	CZTBM VARCHAR(100) NOT NULL,
+	ISTATUS INTEGER NOT NULL,'
+	WHILE @M <= 20
+	BEGIN
+	SET @CSQL = @CSQL + CHAR(13)+'JBX'+CONVERT(varchar(10),@M)+' VARCHAR(200) NULL,'
+	SET @M=@M+1
+	END
+	WHILE @J <= 300
+	BEGIN
+	SET @CSQL = @CSQL + CHAR(13)+'BGD'+CONVERT(varchar(10),@J)+' VARCHAR(200) NULL,'
+	SET @J=@J+1
+	END
+	SET @CSQL = @CSQL+CHAR(13)+
+	'CONSTRAINT [PK_'+@TBNAME+'] PRIMARY KEY CLUSTERED
+	(
+	[IID] ASC
+	)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	) ON [PRIMARY]
+	'
+	exec(@CSQL)
+end
+exec('alter table ' +@TBNAME+' alter Column BGD8 varchar(5000) null')
+exec('alter table ' +@TBNAME+' alter Column BGD9 varchar(5000) null')
+exec('alter table ' +@TBNAME+' alter Column BGD202 varchar(5000) null')
+exec('alter table ' +@TBNAME+' alter Column BGD206 varchar(5000) null')
+exec('alter table ' +@TBNAME+' alter Column BGD18 varchar(5000) null')
+exec('alter table ' +@TBNAME+' alter Column BGD67 varchar(5000) null')
+exec('alter table ' +@TBNAME+' alter Column BGD253 varchar(5000) null')
+set @I=@I+1
+END
+set @I=0
+while @I<10
+begin
+set @TBNAME='TBHisReportBGInfo0'+CONVERT(varchar(10),@I)
+set @J=31
+IF OBJECT_ID(@TBNAME,'u') is NULL
+begin
+	SET @CSQL =
+	'CREATE TABLE '+@TBNAME+'(
+	IID BigInt NOT NULL,
+	CBGID BigInt NOT NULL,
+	DJLRQ DATETIME NULL,
+	ISTATUS INTEGER NOT NULL,'
+	WHILE @J <= 120
+	BEGIN
+	SET @CSQL = @CSQL + CHAR(13)+'BGD'+CONVERT(varchar(10),@J)+' VARCHAR(200) NULL,'
+	SET @J=@J+1
+	END
+	SET @CSQL = @CSQL+CHAR(13)+
+	'CONSTRAINT [PK'+@TBNAME+'] PRIMARY KEY CLUSTERED
+	(
+	[IID] ASC
+	)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+	) ON [PRIMARY]
+	'
+	exec(@CSQL)
+end
+set @I=@I+1
+END
+go
+USE YXHIS
+IF OBJECT_ID('TBHisReportBGInfo10','u') is NULL
+  SELECT * INTO TBHisReportBGInfo10 FROM TBHisReportBGInfo00
+IF OBJECT_ID('TBHisReportInfo10','u') is NULL
+  SELECT * INTO TBHisReportInfo10 FROM TBHisReportInfo00
+go
