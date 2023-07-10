@@ -1,4 +1,6 @@
-D11±àÒë
-mORMot+firedacµÄhttp·þÎñ
-ÒµÎñ¸ôÀë¿ò¼Ü
-°´ÕÕTEST.pasµ¥Ôª´´½¨×Ô¼ºµÄµ¥ÔªÒµÎñ¼´¿É
+Http.sys(mORMot)+Firedac for Delphi
+
+D11ç¼–è¯‘
+mORMot+firedacçš„httpæœåŠ¡
+ä¸šåŠ¡éš”ç¦»æ¡†æž¶
+æŒ‰ç…§TEST.paså•å…ƒåˆ›å»ºè‡ªå·±çš„å•å…ƒä¸šåŠ¡å³å¯
