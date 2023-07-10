@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics,  UpubFun, Vcl.Controls, Vcl.Forms,
   Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, QMqttClient, QLog,
-  qdac_ssl_ics, Vcl.Mask,uRouter,QWorker,uConfig;
+  qdac_ssl_ics, Vcl.Mask,uRouter,QWorker,uConfig,System.Types;
 
 type
   TFrmMQClient = class(TForm)
@@ -204,6 +204,16 @@ begin
     ASender.Publish(PubTop, outvalue, ASender.QosLevel);
     Log := '[Tick:' + IntToStr(StopTime - StartTime) + 'ms]'
       + #13#10 + Text + #13#10 + OutValue;
+    if  Pos('</BGD.20>', Log) > 0 then
+    Log := Log.Replace(Copy(Log, Pos('<BGD.20', Log) , Pos('</BGD.20>', Log) - Pos('<BGD.20', Log) + 9),'');
+    if  Pos('</BGD.21>', Log) > 0 then
+    Log := Log.Replace(Copy(Log, Pos('<BGD.21', Log) , Pos('</BGD.21>', Log) - Pos('<BGD.21', Log) + 9),'');
+    if  Pos('</BGD.22>', Log) > 0 then
+    Log := Log.Replace(Copy(Log, Pos('<BGD.22', Log) , Pos('</BGD.22>', Log) - Pos('<BGD.22', Log) + 9),'');
+    if  Pos('</BGD.23>', Log) > 0 then
+    Log := Log.Replace(Copy(Log, Pos('<BGD.23', Log) , Pos('</BGD.23>', Log) - Pos('<BGD.23', Log) + 9),'');
+    if  Pos('</BGD.24>', Log) > 0 then
+    Log := Log.Replace(Copy(Log, Pos('<BGD.24', Log) , Pos('</BGD.24>', Log) - Pos('<BGD.24', Log) + 9),'');
     if POS('<Code>0</Code>', OutValue) > 0 then
     begin
       PostLog(llError,Log);
@@ -529,7 +539,7 @@ begin
   Ini.MQPubTop := edtPublishTopic.Text;
   Ini.MQPubQos := cbxQoSLevel.ItemIndex;
   Ini.MQSSL := chkSSL.Checked;
-  Ini.SaveToFile(ChangeFileExt(ParamStr(0), '.ini'));
+  SaveToFile;
 end;
 
 procedure TFrmMQClient.tmSendTimer(Sender: TObject);

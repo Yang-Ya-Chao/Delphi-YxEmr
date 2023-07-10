@@ -2568,6 +2568,21 @@ type
   /// Exception raised when running JSON Web Tokens
   EJWTException = class(ESynException);
   /// TJWTContent.result codes after TJWTAbstract.Verify method call
+  TJWTResultErr = (
+    合法有效,
+    Token无效,
+    格式错误,
+    算法无效,
+    数据无效,
+    声明无效,
+    声明错误,
+    接收方无效,
+    授权已过期,
+    授权未生效,
+    签发时间错误,
+    ID错误,
+    签名错误,
+    无业务权限);//签名错误
   TJWTResult = (
     jwtValid,            //合法有效
     jwtNoToken,          //无效Token

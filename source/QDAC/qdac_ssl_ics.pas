@@ -4,7 +4,7 @@ interface
 
 uses Classes, Sysutils, qdac_ssl, OverbyteIcsWSocket, OverbyteIcsSSLEAY, OverbyteIcsLIBEAY, QString, QWorker{$IFDEF MSWINDOWS},
   WinSock{$ELSE} , Posix.Base, Posix.Stdio, Posix.Pthread, Posix.UniStd, IOUtils,
-  Posix.NetDB, Posix.SysSocket, Posix.Fcntl, Posix.StrOpts, Posix.Errno,
+  Posix.NetDB, Posix.SysSocket, Posix.Fcntl, Posix.StrOpts, Posix.Errno,Winapi.Windows,
   Posix.NetinetIn, Posix.arpainet, Posix.SysSelect, Posix.Systime{$ENDIF};
 
 implementation

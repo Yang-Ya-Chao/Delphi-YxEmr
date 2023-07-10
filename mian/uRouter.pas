@@ -4,7 +4,7 @@ unit uRouter;
 interface
 
 uses
-  SysUtils, System.Classes, System.RegularExpressions, SynCrypto, Qjson,uConfig;
+  SysUtils, System.Classes,System.StrUtils, System.RegularExpressions,System.Rtti;
 
 type
   Router = class
@@ -32,7 +32,7 @@ function SetResultInfo(Code: Integer = 0; Msg: string = ''): string;
 implementation
 
 uses
-  uPubMod;
+  uPubMod, SynCrypto, Qjson,uConfig,uEncry;
 
 function SetResultInfo(Code: Integer; Msg: string): string;
 var
@@ -54,12 +54,19 @@ begin
         if not bJson.TryParse(Msg) then
           Add('Msg', Msg, jdtString)
         else
-          Add('Msg', Msg, jdtObject);
+        begin
+          if bJson.DataType = jdtArray then
+            Add('Msg', Msg, jdtArray)
+          else
+            Add('Msg', Msg, jdtObject);
+        end;
         Add('Error', '', jdtString);
       end;
     end;
-
-    Result := aJson.AsJson;
+    if Ini.Aes then
+      Result := AESEncode(aJson.AsJson)
+    else
+      Result := aJson.AsJson;
   finally
     aJson.Free;
     bJson.Free;
@@ -86,7 +93,7 @@ function Router.GetUrlPath(UrlStr:string):string;
     Match: TMatch;
   begin
     Result := '';
-    if Pos('?',UrlStr) < 1 then
+    if not UrlStr.Contains('?') then
       UrlStr := UrlStr+ '?';
     Match := Reg.Match(UrlStr, '(?<='+Ini.Root+'/).*?(?=\?)');
     if Match.Success then
@@ -103,6 +110,7 @@ var
 begin
   Result := False;
   OutValue := '';
+  FCode := 0;
   if Method = 'GetAuth' then Exit(True);
   if Method = '' then
   begin
@@ -114,7 +122,15 @@ begin
     OutValue := '授权码无效！';
     Exit;
   end;
-  if Auth = admin then Exit(True);
+  if Auth = admin then
+  begin
+    if FDate < 1 then
+    begin
+      OutValue := '服务已到期！请联系公司进行处理！';
+      Exit;
+    end;
+    Exit(True);
+  end;
   LJWT := TJWTHS256.Create(UTF8Encode(HS256Key), 0, [], [], 30);
   try
     if not Assigned(LJWT) then
@@ -127,19 +143,19 @@ begin
     if not (LJWTContent.result = jwtValid) then
     begin
         //TRttiEnumerationType.GetName<TJWTResult>(LJWTContent.result)
-      FCode := Ord(LJWTContent.result) + 100;
-        //FError := '授权验证失败！错误代码'+IntToStr(FCode)+'！' ;
+      FCode := Ord(LJWTContent.result);
       Exit;
     end;
     if Pos('|' + Method + '|', '|' + LJWTContent.reg[jrcSubject] + '|') < 1 then
     begin
-      FCode := 113;
+      FCode := 13;
         //FError := '权限不足！无['+Header+']业务权限！' ;
       Exit;
     end;
   finally
     if FCode > 0 then
-      OutValue := '错误的授权信息！错误代码[' + IntToStr(FCode) + ']！';
+      OutValue := '错误的授权信息！'+TRttiEnumerationType.GetName<TJWTResultErr>(TJWTResultErr(FCode))+'！' ;
+      //'错误的授权信息！错误代码[' + FCode.ToString + ']！';
     LJWT.Free;
   end;
   Result := True;
@@ -147,7 +163,7 @@ end;
 
 function Router.DoExcute(Header, InValue: string; out OutValue: string): Boolean;
 var
-  Authorization, Method: string;
+  CDBLX, Authorization, Method: string;
 begin
   Result := False;
   //先从Get请求的url路径中获取业务名
@@ -155,7 +171,8 @@ begin
   //如果是post请求，则从请求头中获取业务名
   if Method = '' then
     Method := Trim(GetParamValue(Header, 'Method'));
-  Authorization := Trim(GetParamValue(Header, 'Authorization'));
+  Authorization := Trim(GetParamValue(Header, 'Authorization').Replace('Bearer','',[rfIgnoreCase]));
+  CDBLX := Trim(GetParamValue(Header, 'CDBLX'));
   //jwt鉴权
   if not CheckAuth(Authorization,Method,OutValue) then Exit;
   try
@@ -164,9 +181,14 @@ begin
       OutValue := '业务码错误！';
       Exit;
     end;
+    //应卫健委要求，入参出参均使用aes加密传输
+    if Ini.AES then
+      InValue := AESDecode(InValue);
     with TPubMod(FindClass(Method).NewInstance).Create do
     begin
-
+      SDBLX := CDBLX;
+      SYXHIS := 'YXHIS'+SDBLX;
+      SYXYKT := 'YXYKT'+SDBLX;
       try
         if not Execute(InValue,Method) then
         begin

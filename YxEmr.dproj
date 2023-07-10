@@ -72,7 +72,7 @@
         <VerInfo_Locale>2052</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DCC_ExeOutput>.\bin</DCC_ExeOutput>
-        <DCC_UnitSearchPath>.\source\mORMot;.\source\QDAC;.\source\Redis;.\source\pub;.\source\JWT\Jose;.\source\JWT\Common;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>.\source\mORMot;.\source\QDAC;.\source\Redis;.\source\pub;.\source\Debugger;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <Custom_Styles>&quot;Aqua Light Slate|VCLSTYLE|$(BDSCOMMONDIR)\Styles\AquaLightSlate.vsf&quot;;&quot;Tablet Dark|VCLSTYLE|$(BDSCOMMONDIR)\Styles\TabletDark.vsf&quot;;&quot;Charcoal Dark Slate|VCLSTYLE|$(BDSCOMMONDIR)\Styles\CharcoalDarkSlate.vsf&quot;;Glossy|VCLSTYLE|$(BDSCOMMONDIR)\Styles\Glossy.vsf</Custom_Styles>
         <DCC_Define>Socket;$(DCC_Define)</DCC_Define>
         <DCC_DcuOutput>.\dcu</DCC_DcuOutput>
@@ -108,19 +108,17 @@
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <AppDPIAwarenessMode>PerMonitor</AppDPIAwarenessMode>
-        <VerInfo_Keys>CompanyName=成都成电医星智慧医疗软件有限公司;FileDescription=医星HIS电子病历标准接口;FileVersion=3.1.0.3;InternalName=医星HIS电子病历标准接口;LegalCopyright=成都成电医星智慧医疗软件有限公司;LegalTrademarks=Chengdu Chengdian Medical Star Intelligent Medical Software Co. , Ltd.;OriginalFilename=YxCisSvr.exe;ProductName=医星HIS电子病历标准接口;ProductVersion=3.1.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=成都成电医星智慧医疗软件有限公司;FileDescription=医星HIS电子病历标准接口;FileVersion=3.1.0.190;InternalName=医星HIS电子病历标准接口;LegalCopyright=成都成电医星智慧医疗软件有限公司;LegalTrademarks=Chengdu Chengdian Medical Star Intelligent Medical Software Co. , Ltd.;OriginalFilename=YxEmr.exe;ProductName=医星HIS电子病历标准接口;ProductVersion=3.1.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Icon_MainIcon>YxEmr_Icon.ico</Icon_MainIcon>
         <DCC_MapFile>3</DCC_MapFile>
         <DCC_DebugInformation>2</DCC_DebugInformation>
         <DCC_LocalDebugSymbols>true</DCC_LocalDebugSymbols>
         <AppExecutionLevel>requireAdministrator</AppExecutionLevel>
-        <DCC_ExeOutput>.\bin</DCC_ExeOutput>
         <VerInfo_MajorVer>3</VerInfo_MajorVer>
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
         <VerInfo_MinorVer>1</VerInfo_MinorVer>
-        <VerInfo_Build>3</VerInfo_Build>
+        <VerInfo_Build>190</VerInfo_Build>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
@@ -167,6 +165,10 @@
         <DCCReference Include="uFrmMain.pas">
             <Form>MainForm</Form>
         </DCCReference>
+        <DCCReference Include="uSvrMain.pas">
+            <Form>MainService</Form>
+            <DesignClass>TService</DesignClass>
+        </DCCReference>
         <DCCReference Include="MQTT\uFrmMQTTClient.pas">
             <Form>FrmMQClient</Form>
         </DCCReference>
@@ -177,36 +179,26 @@
         <DCCReference Include="serve\SoapImpl.pas"/>
         <DCCReference Include="serve\SoapIntf.pas"/>
         <DCCReference Include="serve\uServer.pas"/>
-        <DCCReference Include="public\UpubFun.pas"/>
-        <DCCReference Include="config\uConfig.pas"/>
         <DCCReference Include="forms\ABOUT.pas">
             <Form>AboutBox</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="forms\uFrmAuthManage.pas">
             <Form>FrmAuthManage</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="forms\uFrmMonitor.pas">
             <Form>FrmMonitor</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="forms\uFrmRegist.pas">
             <Form>FrmRegist</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="forms\uFrmSQLConnect.pas">
             <Form>FrmSQLConnect</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="forms\uFrmSvrConfig.pas">
             <Form>FrmSvrConfig</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="helpher\uQueryHelper.pas"/>
         <DCCReference Include="mian\uPubMod.pas"/>
         <DCCReference Include="mian\uRouter.pas"/>
-        <DCCReference Include="pool\uObjPools.pas"/>
         <DCCReference Include="module\uGetAuth.pas"/>
         <DCCReference Include="module\uTest.pas"/>
         <BuildConfiguration Include="Base">
@@ -267,6 +259,12 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="bin\YxEmr.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>YxEmr.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="bin\YxEmr.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>YxEmr.exe</RemoteName>
@@ -275,12 +273,6 @@
                 </DeployFile>
                 <DeployFile LocalName="bin\YxEmr.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win64">
-                        <RemoteName>YxEmr.exe</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="\YxEmr.exe" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="Win32">
                         <RemoteName>YxEmr.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>

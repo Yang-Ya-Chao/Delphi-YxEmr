@@ -4,7 +4,7 @@ object FrmSvrConfig: TFrmSvrConfig
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = #25509#21475#37197#32622
-  ClientHeight = 276
+  ClientHeight = 343
   ClientWidth = 344
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -15,14 +15,15 @@ object FrmSvrConfig: TFrmSvrConfig
   FormStyle = fsStayOnTop
   Position = poScreenCenter
   OnShow = FormShow
+  PixelsPerInch = 96
   TextHeight = 17
   object pnl2: TPanel
     Left = 0
-    Top = 241
+    Top = 305
     Width = 344
-    Height = 35
+    Height = 38
     Align = alClient
-    TabOrder = 0
+    TabOrder = 1
     object BtnSQL: TBitBtn
       Left = 196
       Top = 7
@@ -30,7 +31,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 25
       Caption = #25968#25454#24211
       ParentDoubleBuffered = True
-      TabOrder = 0
+      TabOrder = 3
       OnClick = BtnSQLClick
     end
     object BtnCancel: TBitBtn
@@ -40,7 +41,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 25
       Caption = #25918#24323
       ParentDoubleBuffered = True
-      TabOrder = 1
+      TabOrder = 2
       OnClick = BtnCancelClick
     end
     object BtnSave: TBitBtn
@@ -50,7 +51,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 25
       Caption = #23384#30424
       ParentDoubleBuffered = True
-      TabOrder = 2
+      TabOrder = 1
       OnClick = BtnSaveClick
     end
     object BtnMod: TBitBtn
@@ -60,7 +61,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 25
       Caption = #20462#25913
       ParentDoubleBuffered = True
-      TabOrder = 3
+      TabOrder = 0
       OnClick = BtnModClick
     end
     object BitBtn1: TBitBtn
@@ -78,11 +79,12 @@ object FrmSvrConfig: TFrmSvrConfig
     Left = 0
     Top = 0
     Width = 344
-    Height = 241
+    Height = 305
     Align = alTop
     DoubleBuffered = True
     ParentDoubleBuffered = False
-    TabOrder = 1
+    TabOrder = 0
+    ExplicitTop = 1
     object lbl1: TLabel
       Left = 15
       Top = 190
@@ -104,6 +106,27 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 17
       Caption = #26085#24535#20998#39029#22823#23567#65288'M'#65289
     end
+    object lbl4: TLabel
+      Left = 15
+      Top = 217
+      Width = 61
+      Height = 17
+      Caption = #29289#36164'Url'
+    end
+    object lbl5: TLabel
+      Left = 15
+      Top = 245
+      Width = 69
+      Height = 17
+      Caption = #26381#21153#22120'IP'
+    end
+    object lbl6: TLabel
+      Left = 15
+      Top = 275
+      Width = 119
+      Height = 17
+      Caption = #21382#21490#26085#24535#25991#20214#25968
+    end
     object EdtWorkcount: TEdit
       Left = 140
       Top = 187
@@ -112,7 +135,7 @@ object FrmSvrConfig: TFrmSvrConfig
       NumbersOnly = True
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 0
+      TabOrder = 17
       OnExit = EdtWorkcountExit
     end
     object rbWEB: TRadioButton
@@ -122,7 +145,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 17
       Caption = 'WEBSERVICE'
       Enabled = False
-      TabOrder = 1
+      TabOrder = 13
     end
     object ckMsg: TCheckBox
       Left = 15
@@ -130,7 +153,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 90
       Height = 17
       Caption = #35814#32454#26085#24535
-      TabOrder = 2
+      TabOrder = 6
     end
     object ckReBoot: TCheckBox
       Left = 15
@@ -138,7 +161,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 126
       Height = 17
       Caption = #25509#21475#23450#26102#37325#21551
-      TabOrder = 3
+      TabOrder = 5
       OnClick = ckReBootClick
     end
     object rbHTTP: TRadioButton
@@ -148,7 +171,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 17
       Caption = 'HTTP'
       Checked = True
-      TabOrder = 4
+      TabOrder = 14
       TabStop = True
     end
     object ckAutoRun: TCheckBox
@@ -157,7 +180,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 126
       Height = 17
       Caption = #24320#26426#33258#21160#21551#21160
-      TabOrder = 5
+      TabOrder = 3
     end
     object ckRun: TCheckBox
       Left = 15
@@ -167,7 +190,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Caption = #33258#21160#24320#22987#26381#21153
       Checked = True
       State = cbChecked
-      TabOrder = 6
+      TabOrder = 2
     end
     object EdtPort: TEdit
       Left = 179
@@ -175,7 +198,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 102
       Height = 25
       NumbersOnly = True
-      TabOrder = 7
+      TabOrder = 0
     end
     object BtnCheckPort: TBitBtn
       Left = 288
@@ -183,7 +206,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 42
       Height = 25
       Caption = #26816#27979
-      TabOrder = 8
+      TabOrder = 1
       OnClick = BtnCheckPortClick
     end
     object EdtSize: TEdit
@@ -194,7 +217,7 @@ object FrmSvrConfig: TFrmSvrConfig
       NumbersOnly = True
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 9
+      TabOrder = 11
       Text = '10'
       OnExit = EdtSizeExit
     end
@@ -205,7 +228,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Height = 17
       Caption = 'HTTPS'
       Enabled = False
-      TabOrder = 10
+      TabOrder = 15
       OnClick = ckHTTPSClick
     end
     object ckSQL: TCheckBox
@@ -214,7 +237,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 94
       Height = 17
       Caption = 'SQL'#26085#24535
-      TabOrder = 11
+      TabOrder = 7
     end
     object EdtReBootT: TEdit
       Left = 140
@@ -224,7 +247,7 @@ object FrmSvrConfig: TFrmSvrConfig
       NumbersOnly = True
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 12
+      TabOrder = 4
       TextHint = #37325#21551#38388#38548#26102#38388'('#22825')'
       Visible = False
       OnExit = EdtReBootTExit
@@ -235,7 +258,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 81
       Height = 17
       Caption = 'EMR'#25991#20214
-      TabOrder = 13
+      TabOrder = 12
     end
     object ckSYSLOG: TCheckBox
       Left = 15
@@ -243,7 +266,7 @@ object FrmSvrConfig: TFrmSvrConfig
       Width = 162
       Height = 20
       Caption = #36828#31243'syslog'#26381#21153#22120
-      TabOrder = 14
+      TabOrder = 10
       OnClick = ckSYSLOGClick
     end
     object EdtIP: TEdit
@@ -254,7 +277,7 @@ object FrmSvrConfig: TFrmSvrConfig
       ImeMode = imClose
       ParentShowHint = False
       ShowHint = False
-      TabOrder = 15
+      TabOrder = 9
       TextHint = #36828#31243#26085#24535#26381#21153#22120'IP'
       Visible = False
     end
@@ -275,7 +298,53 @@ object FrmSvrConfig: TFrmSvrConfig
       Caption = #38169#35823#26085#24535
       Checked = True
       State = cbChecked
-      TabOrder = 17
+      TabOrder = 8
+    end
+    object ckAES: TCheckBox
+      Left = 244
+      Top = 190
+      Width = 86
+      Height = 17
+      Caption = #21152#23494#20256#36755
+      TabOrder = 18
+      Visible = False
+      OnClick = ckAESClick
+    end
+    object edtWZUrl: TEdit
+      Left = 81
+      Top = 214
+      Width = 249
+      Height = 25
+      TabOrder = 19
+    end
+    object cbbip: TComboBox
+      Left = 111
+      Top = 242
+      Width = 181
+      Height = 25
+      Style = csDropDownList
+      ImeMode = imClose
+      TabOrder = 20
+    end
+    object ckCache: TCheckBox
+      Left = 244
+      Top = 163
+      Width = 86
+      Height = 17
+      Caption = #20351#29992#32531#23384
+      TabOrder = 21
+      Visible = False
+      OnClick = ckCacheClick
+    end
+    object se1: TSpinEdit
+      Left = 140
+      Top = 270
+      Width = 81
+      Height = 27
+      MaxValue = 0
+      MinValue = 0
+      TabOrder = 22
+      Value = 10
     end
   end
 end

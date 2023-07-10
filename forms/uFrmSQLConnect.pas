@@ -38,8 +38,6 @@ type
     { Private declarations }
   public
     { Public declarations }
-
-    YxSCKTINI: string;
     function BSTATUS(ISTATUS: Boolean): Boolean;
   end;
 
@@ -175,7 +173,7 @@ begin
   ini.DBDataBase := Edtdbname.Text;
   ini.DBUserName := Edtusername.Text;
   ini.DBPassWord := Edtpass.Text;
-  ini.SaveToFile(YxSCKTINI);
+  SaveToFile;
   MessageBox(Handle, '链接保存成功！请重启程序生效！', '提示', MB_ICONASTERISK and MB_ICONINFORMATION);
   ReadConfig;
   BSTATUS(false);
@@ -206,8 +204,7 @@ end;
 procedure TFrmSQLConnect.FormShow(Sender: TObject);
 begin
   BSTATUS(false);
-  YxSCKTINI := ChangeFileExt(ParamStr(0), '.ini');
-  ini.LoadFromFile(YxSCKTINI);
+  LoadFromFile;
   ReadConfig;
   ck1.SetFocus;
 end;

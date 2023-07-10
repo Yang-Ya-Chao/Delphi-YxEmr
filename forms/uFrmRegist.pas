@@ -18,12 +18,14 @@ type
     BtnSET: TBitBtn;
     procedure BtnGetClick(Sender: TObject);
     procedure BtnSETClick(Sender: TObject);
-    procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure EdtRegistChange(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
+    Test:string;
   end;
 
 var
@@ -41,7 +43,11 @@ end;
 procedure TFrmRegist.BtnSETClick(Sender: TObject);
 begin
   if BtnSET.Caption = '试用' then
-    EdtRegist.Text := EnCode(EdtCode.Text+'_'+FormatDateTime('YYYYMMDD', Now + 3),Trim(EdtCode.Text));
+  begin
+    if EdtRegist.Text = '' then
+      EdtRegist.Text := Test;
+  end;
+
   if Trim(EdtRegist.Text) = '' then
   begin
     MessageBox(Handle, '请先输入注册码！', '错误', MB_ICONERROR);
@@ -53,14 +59,14 @@ begin
       MessageBox(Handle, PChar('['+ChangeFileExt(ParamStr(0), '.ini')+']文件创建失败！请使用管理员运行或者放置非系统盘启动！')
         , '错误', MB_ICONERROR)
     else
-      MessageBox(Handle, pchar('['+ChangeFileExt(ParamStr(0), '.ini')+']文件读写失败！请检查文件属性！')
+      MessageBox(Handle, pchar('['+ChangeFileExt(ParamStr(0), '.ini')+']文件读写失败！请去掉文件只读属性！')
         , '错误', MB_ICONERROR);
   end
   else
   begin
     if CheckCPUID then
     begin
-      if BtnSET.Caption = '注册' then
+      if EdtRegist.Text <> Test then
       begin
         MessageBox(Handle, '服务注册成功！请重启程序！', '提示', MB_ICONASTERISK and MB_ICONINFORMATION);
         Application.Terminate;
@@ -83,7 +89,7 @@ begin
     end
     else
     begin
-      MessageBox(Handle, '注册码不正确！请联系QQ******！', '错误', MB_ICONERROR);
+      MessageBox(Handle, '注册码不正确或者已到期！请联系公司处理！', '错误', MB_ICONERROR);
       EdtRegist.Text := '';
       if EdtRegist.CanFocus then
         EdtRegist.SetFocus;
@@ -92,15 +98,32 @@ begin
 
 end;
 
+procedure TFrmRegist.EdtRegistChange(Sender: TObject);
+begin
+  if (EdtRegist.Text <> '') and (Test <> '') then
+    BtnSET.Caption := '注册'
+  else if (EdtRegist.Text = '') and (Test <>'') then
+    BtnSET.Caption := '试用';
+end;
+
 procedure TFrmRegist.FormCreate(Sender: TObject);
 begin
+  EdtCode.Text := GetCPUIDStr;
   if FileExists(ChangeFileExt(ParamStr(0), '.db')) then
+  begin
     BtnSET.Caption := '试用';
+    Test := EnCode(EdtCode.Text+'_'+FormatDateTime('YYYYMMDD', Now + 3),Trim(EdtCode.Text));
+  end;
+
 end;
 
 procedure TFrmRegist.FormShow(Sender: TObject);
 begin
-  EdtCode.Text := GetCPUIDStr;
+  if Test <> '' then
+  begin
+    BtnSET.SetFocus;
+    EdtRegist.TextHint := '试用不用写注册码';
+  end;
 end;
 
 end.

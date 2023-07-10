@@ -1308,11 +1308,8 @@ var
   I: Integer;
   AObj: TDialogGroup;
 begin
-  // if Assigned(FAppEvents) then
-  // begin
-  // FAppEvents.OnMessage := nil;
-  // FreeAndNil(FAppEvents);
-  // end;
+  if Assigned(TDialogAppEvents.Current) then
+    FreeAndNil(TDialogAppEvents.Current);
   if Assigned(FPopupHelper) then
     FreeAndNil(FPopupHelper);
   Clear;

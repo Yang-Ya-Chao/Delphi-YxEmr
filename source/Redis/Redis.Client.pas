@@ -1948,7 +1948,7 @@ begin
     on E: Exception do
     begin
       Result := nil;
-      raise ERedisConnectionException.Create('Cannot connect to REDIS server [' + E.Message + ']');
+      raise ERedisConnectionException.Create('Redis服务未启动！请检查！ [' + E.Message + ']');
     end;
   end;
 end;

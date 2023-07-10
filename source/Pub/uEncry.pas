@@ -5,20 +5,22 @@ interface
 
 
 uses
-  SysUtils, Classes, Winapi.Windows,CnSM4,CnBase64,CnAES;
+  SysUtils,System.NetEncoding, Classes, Winapi.Windows,CnSM4,CnBase64,CnAES;
 
 
-function EnCode(Value: AnsiString; key: AnsiString =
-  'AbCd1EFG2h3I4j5kLm9no4PQr8Stu6Vw5X7yz'): AnsiString;
-
-function DeCode(Value: AnsiString; key: AnsiString =
-  'AbCd1EFG2h3I4j5kLm9no4PQr8Stu6Vw5X7yz'): AnsiString;
+function EnCode(Value: String;key : string= ''): String;
+function DeCode(Value: String;key : string= ''): String;
 
 //国密SM4
-function Sm4Encode(Value:AnsiString;key:Ansistring = 'AC1hI4j5kLmPQr8S'):AnsiString;
-function Sm4Decode(Value:AnsiString;key:Ansistring = 'AC1hI4j5kLmPQr8S'):AnsiString;
+function Sm4Encode(Value:AnsiString):AnsiString;
+function Sm4Decode(Value:AnsiString):AnsiString;
+//AES-ECB-PKCS7-BASE64
+function AESEncode(Value:AnsiString):AnsiString;
+function AESDecode(Value:AnsiString):AnsiString;
 
 implementation
+
+uses uConfig;
 
 function HexToInt(const Hex: AnsiString): Integer;
 var
@@ -83,10 +85,11 @@ begin
   end;
 end;
 
-function EnCode(Value, key: AnsiString): AnsiString;
+function EnCode(Value,key: String): String;
 begin
   Result := '';
   if Value = '' then Exit;
+  if key = '' then key := DBkey;
   try
     Result := BytesToHex(
       AESEncryptCbcBytes(TEncoding.Default.UTF8.GetBytes(Value),
@@ -98,10 +101,11 @@ begin
 
 end;
 
-function DeCode(Value,key: AnsiString): AnsiString;
+function DeCode(Value,key: String): String;
 begin
   Result := '';
   if Value = '' then Exit;
+  if key = '' then key := DBkey;
   try
     Result := TEncoding.UTF8.GetString(AESDecryptcbcBytes(
       HexToBytes(Value),
@@ -142,7 +146,7 @@ begin
     Delete(Result, L - V + 1, V);
 end;
 
-function Sm4Encode(Value,key:Ansistring):AnsiString;
+function Sm4Encode(Value:Ansistring):AnsiString;
 var
   Output: AnsiString;
   Len: Integer;
@@ -160,7 +164,7 @@ begin
       Len := (((Len - 1) div 16) + 1) * 16;
     SetLength(Output, Len);
     ZeroMemory(@(Output[1]), Len);
-    SM4EncryptEcbStr(UTF8Encode(key), StrAddPKCS7Padding(UTF8Encode(Value),SM4_BLOCKSIZE), @(Output[1]));
+    SM4EncryptEcbStr(UTF8Encode(SM4Key), StrAddPKCS7Padding(UTF8Encode(Value),SM4_BLOCKSIZE), @(Output[1]));
     BaseByte := Base64Encode(Output,s);
     if BaseByte <> 0 then Exit;
     Result := s;
@@ -170,7 +174,7 @@ begin
   end;
 end;
 
-function Sm4Decode(Value,key:Ansistring):AnsiString;
+function Sm4Decode(Value:Ansistring):AnsiString;
 var
   S: AnsiString;
   Output: AnsiString;
@@ -190,7 +194,7 @@ begin
       Len := (((Len - 1) div 16) + 1) * 16;
     SetLength(Output, Len);
     ZeroMemory(@(Output[1]), Len);
-    SM4DecryptEcbStr(UTF8Encode(key), S, @(Output[1]));
+    SM4DecryptEcbStr(UTF8Encode(SM4Key), S, @(Output[1]));
     Output := StrRemovePKCS7Padding(Output);
     Result := UTF8Decode(Output);
   finally
@@ -198,7 +202,66 @@ begin
       raise Exception.Create('SM4Decode Error！Base64:'+inttostr(BaseByte));
   end;
 end;
+//AES-ECB加密解密-------------------------
+procedure BytesAddPKCS7Padding(var Data: TBytes; BlockSize: Byte);
+var
+  R: Byte;
+  L, I: Integer;
+begin
+  L := Length(Data);
+  R := L mod BlockSize;
+  R := BlockSize - R;
+  if R = 0 then
+    R := R + BlockSize;
 
+  SetLength(Data, L + R);
+  for I := 0 to R - 1 do
+    Data[L + I] := R;
+end;
 
+procedure BytesRemovePKCS7Padding(var Data: TBytes);
+var
+  L: Integer;
+  V: Byte;
+begin
+  L := Length(Data);
+  if L = 0 then
+    Exit;
+
+  V := Ord(Data[L - 1]);  // 末是几表示加了几
+
+  if V <= L then
+    SetLength(Data, L - V);
+end;
+
+function AESEncode(Value:AnsiString):AnsiString;
+begin
+  Result := '';
+  try
+    var DataBytes := TEncoding.UTF8.GetBytes(Value);
+    var KeyBytes := TEncoding.UTF8.GetBytes(AesKey);
+    BytesAddPKCS7Padding(DataBytes, AES_BLOCKSIZE);
+    Result := TNetEncoding.Base64.EncodeBytesToString(
+                AESEncryptEcbBytes(DataBytes,
+                  KeyBytes,
+                  kbt128));
+  except
+    Result := Value;
+  end;
+end;
+function AESDecode(Value:AnsiString):AnsiString;
+begin
+  Result := '';
+  try
+    var KeyBytes := TEncoding.UTF8.GetBytes(AesKey);
+    var DataBytes := TNetEncoding.Base64.DecodeStringToBytes(Value);
+    var ResBytes := AESDecryptEcbBytes(DataBytes, KeyBytes, kbt128);
+    BytesRemovePKCS7Padding(ResBytes);
+    Result := TEncoding.UTF8.GetString(ResBytes);
+  except
+    Result := Value;
+  end;
+
+end;
 end.
 

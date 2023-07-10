@@ -15,6 +15,7 @@ object FrmSQLConnect: TFrmSQLConnect
   FormStyle = fsStayOnTop
   Position = poScreenCenter
   OnShow = FormShow
+  PixelsPerInch = 96
   TextHeight = 17
   object lbl1: TLabel
     Left = 40

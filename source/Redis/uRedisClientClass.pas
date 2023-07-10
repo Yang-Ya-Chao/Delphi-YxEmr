@@ -13,6 +13,7 @@ const
   // REDIS_SERVER_ADDRESS = '192.168.1.102';
   KEY_GEODATA = 'geodata';
   REDIS_SERVER_ADDRESS = '127.0.0.1';
+  REDIS_SERVER_PORT = 6379;
 
 type
    /// <summary>Redis读取类</summary>
@@ -26,7 +27,7 @@ type
     FRedisPort:Word;
    public
      /// <summary>创建类;参数：RedisUrl：地址，RedisPort：端口 </summary>
-     constructor Create(RedisUrl:string;RedisPort:Word); overload;
+     constructor Create; overload;
      destructor Destroy; override;
      /// <summary>连接REDIS</summary>
      function Connect:TRedisClientClass;
@@ -148,17 +149,22 @@ implementation
 
 function TRedisClientClass.Connect:TRedisClientClass;
 begin
-  if Assigned(FRedis) then
-    FRedis:=nil;
-  FRedis := TRedisClient.Create(FRedisUrl, FRedisPort,'indy');
-  FRedis.Connect;
+  //
   result:=Self;
 end;
 
-constructor TRedisClientClass.Create(RedisUrl:string;RedisPort:Word);
+constructor TRedisClientClass.Create;
 begin
-  FRedisUrl:=RedisUrl;
-  FRedisPort:=RedisPort;
+  FRedisUrl:=REDIS_SERVER_ADDRESS;
+  FRedisPort:=REDIS_SERVER_PORT;
+  if Assigned(FRedis) then
+    FRedis:=nil;
+  try
+    FRedis := TRedisClient.Create(FRedisUrl, FRedisPort,'indy');
+  except
+
+  end;
+  //FRedis.Connect;
 end;
 
 function TRedisClientClass.DelKey(const aKeys: array of string): Integer;

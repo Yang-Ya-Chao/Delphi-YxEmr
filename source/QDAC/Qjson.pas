@@ -6473,34 +6473,112 @@ procedure TQJson.ToRtti(ADest: Pointer; AType: PTypeInfo;
     J: Integer;
     AChild: TQJson;
     AObj: TObject;
+    tmpB:Boolean;
+    Attr:TCustomAttribute;
   begin
-    AContext := TRttiContext.Create;
-    ARttiType := AContext.GetType(AType);
-    ABaseAddr := ADest;
-    AFields := ARttiType.GetFields;
-    for J := Low(AFields) to High(AFields) do
-    begin
-      if (AFields[J].FieldType <> nil) then
+    try
+      AContext := TRttiContext.Create;
+      ARttiType := AContext.GetType(AType);
+      ABaseAddr := ADest;
+      AFields := ARttiType.GetFields;
+      for J := Low(AFields) to High(AFields) do
       begin
-        AChild := ItemByName(AFields[J].Name);
-        if AChild <> nil then
+        if (AFields[J].FieldType <> nil) then
         begin
-          case AFields[J].FieldType.TypeKind of
-            tkInteger:
-              AFields[J].SetValue(ABaseAddr, AChild.AsInteger);
-{$IFNDEF NEXTGEN}
-            tkString:
-              PShortString(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                ShortString(AChild.AsString);
-{$ENDIF !NEXTGEN}
-            tkUString{$IFNDEF NEXTGEN}, tkLString, tkWString{$ENDIF !NEXTGEN}:
-              AFields[J].SetValue(ABaseAddr, AChild.AsString);
-            tkEnumeration:
+          AChild := ItemByName(AFields[J].Name);
+          if AChild <> nil then
+          begin
+            case AFields[J].FieldType.TypeKind of
+              tkInteger:
+                AFields[J].SetValue(ABaseAddr, AChild.AsInteger);
+  {$IFNDEF NEXTGEN}
+              tkString:
               begin
-                if GetTypeData(AFields[J].FieldType.Handle)
-                  ^.BaseType^ = TypeInfo(Boolean) then
-                  AFields[J].SetValue(ABaseAddr, AChild.AsBoolean)
-                else
+//                Attr := AFields[J].GetAttribute<SNotEmpty>;
+//                if (AChild.AsString = '') and (Attr <> nil) then
+//                  raise Exception.Create(SNotEmpty(Attr).Msg);
+                PShortString(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                  ShortString(AChild.AsString);
+              end;    
+  {$ENDIF !NEXTGEN}
+              tkUString{$IFNDEF NEXTGEN}, tkLString, tkWString{$ENDIF !NEXTGEN}:
+                AFields[J].SetValue(ABaseAddr, AChild.AsString);
+              tkEnumeration:
+                begin
+                  if GetTypeData(AFields[J].FieldType.Handle)
+                    ^.BaseType^ = TypeInfo(Boolean) then
+                  begin
+                    TryStrToBool(AChild.Value,tmpB);
+                    AFields[J].SetValue(ABaseAddr, tmpB);
+                  end
+
+                  else
+                  begin
+                    case GetTypeData(AFields[J].FieldType.Handle).OrdType of
+                      otSByte:
+                        begin
+                          if AChild.DataType = jdtInteger then
+                            PShortint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              AChild.AsInteger
+                          else
+                            PShortint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              GetEnumValue(AFields[J].FieldType.Handle,
+                              AChild.AsString);
+                        end;
+                      otUByte:
+                        begin
+                          if AChild.DataType = jdtInteger then
+                            PByte(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              AChild.AsInteger
+                          else
+                            PByte(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              GetEnumValue(AFields[J].FieldType.Handle,
+                              AChild.AsString);
+                        end;
+                      otSWord:
+                        begin
+                          if AChild.DataType = jdtInteger then
+                            PSmallint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              AChild.AsInteger
+                          else
+                            PSmallint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              GetEnumValue(AFields[J].FieldType.Handle,
+                              AChild.AsString);
+                        end;
+                      otUWord:
+                        begin
+                          if AChild.DataType = jdtInteger then
+                            PWord(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              AChild.AsInteger
+                          else
+                            PWord(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              GetEnumValue(AFields[J].FieldType.Handle,
+                              AChild.AsString);
+                        end;
+                      otSLong:
+                        begin
+                          if AChild.DataType = jdtInteger then
+                            PInteger(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              AChild.AsInteger
+                          else
+                            PInteger(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              GetEnumValue(AFields[J].FieldType.Handle,
+                              AChild.AsString);
+                        end;
+                      otULong:
+                        begin
+                          if AChild.DataType = jdtInteger then
+                            PCardinal(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              AChild.AsInteger
+                          else
+                            PCardinal(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                              GetEnumValue(AFields[J].FieldType.Handle,
+                              AChild.AsString);
+                        end;
+                    end;
+                  end;
+                end;
+              tkSet:
                 begin
                   case GetTypeData(AFields[J].FieldType.Handle).OrdType of
                     otSByte:
@@ -6510,7 +6588,7 @@ procedure TQJson.ToRtti(ADest: Pointer; AType: PTypeInfo;
                             AChild.AsInteger
                         else
                           PShortint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                            GetEnumValue(AFields[J].FieldType.Handle,
+                            StringToSet(AFields[J].FieldType.Handle,
                             AChild.AsString);
                       end;
                     otUByte:
@@ -6520,7 +6598,7 @@ procedure TQJson.ToRtti(ADest: Pointer; AType: PTypeInfo;
                             AChild.AsInteger
                         else
                           PByte(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                            GetEnumValue(AFields[J].FieldType.Handle,
+                            StringToSet(AFields[J].FieldType.Handle,
                             AChild.AsString);
                       end;
                     otSWord:
@@ -6530,7 +6608,7 @@ procedure TQJson.ToRtti(ADest: Pointer; AType: PTypeInfo;
                             AChild.AsInteger
                         else
                           PSmallint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                            GetEnumValue(AFields[J].FieldType.Handle,
+                            StringToSet(AFields[J].FieldType.Handle,
                             AChild.AsString);
                       end;
                     otUWord:
@@ -6540,7 +6618,7 @@ procedure TQJson.ToRtti(ADest: Pointer; AType: PTypeInfo;
                             AChild.AsInteger
                         else
                           PWord(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                            GetEnumValue(AFields[J].FieldType.Handle,
+                            StringToSet(AFields[J].FieldType.Handle,
                             AChild.AsString);
                       end;
                     otSLong:
@@ -6550,7 +6628,7 @@ procedure TQJson.ToRtti(ADest: Pointer; AType: PTypeInfo;
                             AChild.AsInteger
                         else
                           PInteger(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                            GetEnumValue(AFields[J].FieldType.Handle,
+                            StringToSet(AFields[J].FieldType.Handle,
                             AChild.AsString);
                       end;
                     otULong:
@@ -6560,169 +6638,107 @@ procedure TQJson.ToRtti(ADest: Pointer; AType: PTypeInfo;
                             AChild.AsInteger
                         else
                           PCardinal(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                            GetEnumValue(AFields[J].FieldType.Handle,
+                            StringToSet(AFields[J].FieldType.Handle,
                             AChild.AsString);
                       end;
                   end;
                 end;
-              end;
-            tkSet:
-              begin
-                case GetTypeData(AFields[J].FieldType.Handle).OrdType of
-                  otSByte:
-                    begin
-                      if AChild.DataType = jdtInteger then
-                        PShortint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          AChild.AsInteger
-                      else
-                        PShortint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          StringToSet(AFields[J].FieldType.Handle,
-                          AChild.AsString);
-                    end;
-                  otUByte:
-                    begin
-                      if AChild.DataType = jdtInteger then
-                        PByte(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          AChild.AsInteger
-                      else
-                        PByte(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          StringToSet(AFields[J].FieldType.Handle,
-                          AChild.AsString);
-                    end;
-                  otSWord:
-                    begin
-                      if AChild.DataType = jdtInteger then
-                        PSmallint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          AChild.AsInteger
-                      else
-                        PSmallint(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          StringToSet(AFields[J].FieldType.Handle,
-                          AChild.AsString);
-                    end;
-                  otUWord:
-                    begin
-                      if AChild.DataType = jdtInteger then
-                        PWord(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          AChild.AsInteger
-                      else
-                        PWord(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          StringToSet(AFields[J].FieldType.Handle,
-                          AChild.AsString);
-                    end;
-                  otSLong:
-                    begin
-                      if AChild.DataType = jdtInteger then
-                        PInteger(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          AChild.AsInteger
-                      else
-                        PInteger(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          StringToSet(AFields[J].FieldType.Handle,
-                          AChild.AsString);
-                    end;
-                  otULong:
-                    begin
-                      if AChild.DataType = jdtInteger then
-                        PCardinal(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          AChild.AsInteger
-                      else
-                        PCardinal(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                          StringToSet(AFields[J].FieldType.Handle,
-                          AChild.AsString);
-                    end;
-                end;
-              end;
-            tkChar, tkWChar:
-              AFields[J].SetValue(ABaseAddr, AChild.AsString);
-            tkFloat:
-              if (AFields[J].FieldType.Handle = TypeInfo(TDateTime)) or
-                (AFields[J].FieldType.Handle = TypeInfo(TTime)) or
-                (AFields[J].FieldType.Handle = TypeInfo(TDate)) then
-              begin
-                if AChild.IsDateTime then
-                  AFields[J].SetValue(ABaseAddr, AChild.AsDateTime)
-                else if AChild.DataType in [jdtNull, jdtUnknown] then
-                  AFields[J].SetValue(ABaseAddr, 0)
-                else
+              tkChar, tkWChar:
+                AFields[J].SetValue(ABaseAddr, AChild.AsString);
+              tkFloat:
+                if (AFields[J].FieldType.Handle = TypeInfo(TDateTime)) or
+                  (AFields[J].FieldType.Handle = TypeInfo(TTime)) or
+                  (AFields[J].FieldType.Handle = TypeInfo(TDate)) then
                 begin
-                  if AChild.DataType = jdtInteger then // 整数？Unix 时间戳？
-                  begin
-                    case JsonIntToTimeStyle of
-                      tsDeny:
-                        raise Exception.CreateFmt(SBadConvert,
-                          [AChild.AsString, JsonTypeName[jdtDateTime]]);
-                      tsSecondsFrom1970: // Unix
-                        begin
-                          if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
-                            AFields[J].SetValue(ABaseAddr,
-                              IncHour(UnixToDateTime(AChild.AsInt64),
-                              JsonTimezone))
-                          else
-                            AFields[J].SetValue(ABaseAddr,
-                              UnixToDateTime(AChild.AsInt64));
-                        end;
-                      tsSecondsFrom1899:
-                        begin
-                          if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
-                            AFields[J].SetValue(ABaseAddr,
-                              IncHour(AChild.AsInt64 / 86400, JsonTimezone))
-                          else
-                            AFields[J].SetValue(ABaseAddr,
-                              AChild.AsInt64 / 86400);
-                        end;
-                      tsMsFrom1970:
-                        begin
-                          if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
-                            AFields[J].SetValue(ABaseAddr,
-                              IncHour(IncMilliSecond(UnixDateDelta,
-                              AChild.AsInt64), JsonTimezone))
-                          else
-                            AFields[J].SetValue(ABaseAddr,
-                              IncMilliSecond(UnixDateDelta, AChild.AsInt64));
-                        end;
-                      tsMsFrom1899:
-                        if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
-                          AFields[J].SetValue(ABaseAddr,
-                            IncHour(AChild.AsInt64 / 86400000, JsonTimezone))
-                        else
-                          AFields[J].SetValue(ABaseAddr,
-                            AChild.AsInt64 / 86400000);
-                    end;
-                  end
+                  if AChild.IsDateTime then
+                    AFields[J].SetValue(ABaseAddr, AChild.AsDateTime)
+                  else if AChild.DataType in [jdtNull, jdtUnknown] then
+                    AFields[J].SetValue(ABaseAddr, 0)
                   else
-                    raise Exception.CreateFmt(SBadConvert,
-                      [AChild.AsString, JsonTypeName[AChild.DataType]]);
-                end;
-              end
-              else
-                AFields[J].SetValue(ABaseAddr, AChild.AsFloat);
-            tkInt64:
-              AFields[J].SetValue(ABaseAddr, AChild.AsInt64);
-            tkVariant:
-              PVariant(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                AChild.AsVariant;
-            tkArray, tkDynArray:
-              AChild.ToRtti(Pointer(IntPtr(ABaseAddr) + AFields[J].Offset),
-                AFields[J].FieldType.Handle);
-            tkClass:
-              begin
-                AObj := AFields[J].GetValue(ABaseAddr).AsObject;
-                if AObj is TStrings then
-                  (AObj as TStrings).Text := AChild.AsString
-                else if AObj is TCollection then
-                  LoadCollection(AChild, AObj as TCollection)
+                  begin
+                    if AChild.DataType = jdtInteger then // 整数？Unix 时间戳？
+                    begin
+                      case JsonIntToTimeStyle of
+                        tsDeny:
+                          raise Exception.CreateFmt(SBadConvert,
+                            [AChild.AsString, JsonTypeName[jdtDateTime]]);
+                        tsSecondsFrom1970: // Unix
+                          begin
+                            if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
+                              AFields[J].SetValue(ABaseAddr,
+                                IncHour(UnixToDateTime(AChild.AsInt64),
+                                JsonTimezone))
+                            else
+                              AFields[J].SetValue(ABaseAddr,
+                                UnixToDateTime(AChild.AsInt64));
+                          end;
+                        tsSecondsFrom1899:
+                          begin
+                            if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
+                              AFields[J].SetValue(ABaseAddr,
+                                IncHour(AChild.AsInt64 / 86400, JsonTimezone))
+                            else
+                              AFields[J].SetValue(ABaseAddr,
+                                AChild.AsInt64 / 86400);
+                          end;
+                        tsMsFrom1970:
+                          begin
+                            if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
+                              AFields[J].SetValue(ABaseAddr,
+                                IncHour(IncMilliSecond(UnixDateDelta,
+                                AChild.AsInt64), JsonTimezone))
+                            else
+                              AFields[J].SetValue(ABaseAddr,
+                                IncMilliSecond(UnixDateDelta, AChild.AsInt64));
+                          end;
+                        tsMsFrom1899:
+                          if (JsonTimezone >= -12) and (JsonTimezone <= 12) then
+                            AFields[J].SetValue(ABaseAddr,
+                              IncHour(AChild.AsInt64 / 86400000, JsonTimezone))
+                          else
+                            AFields[J].SetValue(ABaseAddr,
+                              AChild.AsInt64 / 86400000);
+                      end;
+                    end
+                    else
+                      raise Exception.CreateFmt(SBadConvert,
+                        [AChild.AsString, JsonTypeName[AChild.DataType]]);
+                  end;
+                end
                 else
-                  AChild.ToRtti(AObj);
-              end;
-            tkRecord:
-              if AFields[J].FieldType.Handle = TypeInfo(TGuid) then
-                PGuid(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
-                  StringToGuid(AChild.AsString)
-              else
+                  AFields[J].SetValue(ABaseAddr, AChild.AsFloat);
+              tkInt64:
+                AFields[J].SetValue(ABaseAddr, AChild.AsInt64);
+              tkVariant:
+                PVariant(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                  AChild.AsVariant;
+              tkArray, tkDynArray:
                 AChild.ToRtti(Pointer(IntPtr(ABaseAddr) + AFields[J].Offset),
                   AFields[J].FieldType.Handle);
+              tkClass:
+                begin
+                  AObj := AFields[J].GetValue(ABaseAddr).AsObject;
+                  if AObj is TStrings then
+                    (AObj as TStrings).Text := AChild.AsString
+                  else if AObj is TCollection then
+                    LoadCollection(AChild, AObj as TCollection)
+                  else
+                    AChild.ToRtti(AObj);
+                end;
+              tkRecord:
+                if AFields[J].FieldType.Handle = TypeInfo(TGuid) then
+                  PGuid(IntPtr(ABaseAddr) + AFields[J].Offset)^ :=
+                    StringToGuid(AChild.AsString)
+                else
+                  AChild.ToRtti(Pointer(IntPtr(ABaseAddr) + AFields[J].Offset),
+                    AFields[J].FieldType.Handle);
+            end;
           end;
         end;
       end;
+    except
+      on e:Exception do
+        raise Exception.Create('['+AChild.Name+']:'+e.message);
     end;
   end;
 

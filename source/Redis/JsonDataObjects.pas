@@ -1081,7 +1081,11 @@ type
   private
     FDataString: UTF8String;
   protected
-    function Realloc(var NewCapacity: Longint): Pointer; override;
+{$IFDEF RTLVersion >=28}
+function Realloc(var NewCapacity: NativeInt): Pointer;
+{$ELSE}
+function Realloc(var NewCapacity: LongInt): Pointer;
+{$ENDIF}
   public
     constructor Create;
     property DataString: UTF8String read FDataString;
@@ -1092,7 +1096,11 @@ type
   private
     FBytes: TBytes;
   protected
-    function Realloc(var NewCapacity: Longint): Pointer; override;
+{$IFDEF RTLVersion >=28}
+function Realloc(var NewCapacity: NativeInt): Pointer;
+{$ELSE}
+function Realloc(var NewCapacity: LongInt): Pointer;
+{$ENDIF}
   public
     constructor Create;
     property Bytes: TBytes read FBytes;
@@ -8236,7 +8244,11 @@ begin
   SetPointer(nil, 0);
 end;
 
-function TJsonUTF8StringStream.Realloc(var NewCapacity: Longint): Pointer;
+{$IFDEF RTLVersion >=28}
+function TJsonUTF8StringStream.Realloc(var NewCapacity: NativeInt): Pointer;
+{$ELSE}
+function TJsonUTF8StringStream.Realloc(var NewCapacity: LongInt): Pointer;
+{$ENDIF}
 var
   L: Longint;
 begin
@@ -8273,8 +8285,11 @@ begin
   inherited Create;
   SetPointer(nil, 0);
 end;
-
-function TJsonBytesStream.Realloc(var NewCapacity: Longint): Pointer;
+{$IFDEF RTLVersion >=28}
+function TJsonBytesStream.Realloc(var NewCapacity: NativeInt): Pointer;
+{$ELSE}
+function TJsonBytesStream.Realloc(var NewCapacity: LongInt): Pointer;
+{$ENDIF}
 var
   L: Longint;
 begin

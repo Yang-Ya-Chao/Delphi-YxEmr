@@ -35,8 +35,8 @@ end;
 
 //注册这个子类Test,后一个参数为注册类别名，与请求的Method参数一致
 initialization
-  RegisterClassAlias(Test,'Test');
+  //RegisterClassAlias(Test,'Test');
 finalization
-  System.Classes.UnRegisterClass(Test)
+  //System.Classes.UnRegisterClass(Test)
 end.
 

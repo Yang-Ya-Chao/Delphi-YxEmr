@@ -12,6 +12,7 @@ object FrmMQClient: TFrmMQClient
   Font.Style = []
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  PixelsPerInch = 96
   TextHeight = 17
   object Panel1: TPanel
     Left = 0
@@ -341,7 +342,7 @@ object FrmMQClient: TFrmMQClient
             Left = 2
             Top = 2
             Width = 77
-            Height = 30
+            Height = 17
             Margins.Left = 2
             Margins.Top = 2
             Margins.Right = 2
@@ -349,7 +350,6 @@ object FrmMQClient: TFrmMQClient
             Align = alLeft
             Caption = #25509#25910#20027#39064':'
             Layout = tlCenter
-            ExplicitHeight = 17
           end
           object edtSubscribeTopic: TEdit
             AlignWithMargins = True
@@ -496,7 +496,7 @@ object FrmMQClient: TFrmMQClient
           Left = 3
           Top = 3
           Width = 77
-          Height = 37
+          Height = 17
           Margins.Left = 2
           Margins.Top = 2
           Margins.Right = 2
@@ -504,7 +504,6 @@ object FrmMQClient: TFrmMQClient
           Align = alLeft
           Caption = #21457#24067#20869#23481':'
           Layout = tlCenter
-          ExplicitHeight = 17
         end
         object btnPublish: TButton
           AlignWithMargins = True

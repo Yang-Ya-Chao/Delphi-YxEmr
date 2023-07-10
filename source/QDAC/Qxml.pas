@@ -2759,7 +2759,7 @@ var
     begin
       for I := 0 to AItem.FAttrs.Count - 1 do
         ABuilder.Cat(Space, 1).Cat(AItem.Attrs[I].FName).Cat(ValueStart, 2)
-          .Cat(XMLEncode(AItem.Attrs[I].FValue, True, False)).Cat(Quoter);
+          .Cat(XMLEncode(AItem.Attrs[I].FValue, False, False)).Cat(Quoter);
     end;
     if AItem.Count = 0 then
     begin
@@ -2803,7 +2803,7 @@ var
             begin
               // if ADoFormat then
               // ABuilder.Replicate(AIndent, ALevel);
-              ABuilder.Cat(XMLEncode(ANode.FName, False, True));
+              ABuilder.Cat(XMLEncode(ANode.FName, False, false));
               if ADoFormat and (I < AItem.Count - 1) then
                 ABuilder.Cat(SLineBreak);
             end;

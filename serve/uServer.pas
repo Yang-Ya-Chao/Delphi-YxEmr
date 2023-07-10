@@ -15,7 +15,7 @@ interface
 
 uses
   SysUtils, Classes,  HTTPApp, WebReq, SynCommons, SynCrtSock,
-  SynWebEnv,  Vcl.ExtCtrls;
+  SynWebEnv,  Vcl.ExtCtrls,System.Types,SYSTEM.NetEncoding;
 
 type
   TSynWebRequestHandler = class(TWebRequestHandler);
@@ -56,7 +56,8 @@ implementation
 
 uses
   SynZip, SynWebReqRes, uRouter, System.Variants, Winapi.Windows,
-  Forms, Winapi.Messages, uHtml, QLog, UpubFun,QWorker,Qjson,QXML,uConfig;
+  Forms, Winapi.Messages, uHtml, QLog, UpubFun,QWorker,Qjson,QXML,
+  uConfig,uEncry;
 
 var
   RequestHandler: TWebRequestHandler = nil;
@@ -102,7 +103,8 @@ begin
     FHttpServer.OnRequest := DoCommandGet
   else
     FHttpServer.OnRequest := Process;
-  //FHttpServer.HTTPQueueLength := 10000;
+  //处理请求队列，太大了并没有意义，业务上根本处理不了
+  FHttpServer.HTTPQueueLength := 1000;
   FHttpServer.Clone(Ini.Pools - 1); // will use a thread pool of 32 threads in total
   FActive := true;
   FPATH := ExtractFilePath(ParamStr(0)) + 'File';
@@ -335,7 +337,7 @@ begin
           Exit;
         end;
         {$ENDIF}
-        aBuff := '/'+UTF8ToString(AContext.URL);
+        aBuff := '/'+UTF8Decode(AContext.URL);
         aHeader := UTF8ToString(AContext.InHeaders).Replace(#13#10,'&');
         if not Execute(aHeader,aBuff, OutValue) then
           Exit;
@@ -384,14 +386,15 @@ begin
     AContext.OutContent := StringToUTF8(OutValue);
     StopTime := GetTickCount64;
     var aJson := TQjson.create;
+    var Value := AESDecode(OutValue);
     try
       Log := #13#10 + '[请求方式]:' + 'HTTP/'+AContext.Method
            + #13#10 + '[请求地址]:' + AContext.URL
            + #13#10 + '[请求头]:' + aHeader
-           + #13#10 + '[耗时]:' + IntToStr(StopTime - StartTime) + 'ms'
+           + #13#10 + '[耗时]:' + (StopTime - StartTime).ToString + 'ms'
            + #13#10 + '[入参]:' + UTF8ToString(AContext.InContent)
-           + #13#10 + '[出参]:' + OutValue + #13#10;
-      if aJson.TryParse(OutValue) then
+           + #13#10 + '[出参]:' + Value + #13#10;
+      if aJson.TryParse(Value) then
       begin
         if aJson.IntByPath('Result.Code',0) = 0 then
         begin
@@ -459,7 +462,7 @@ begin
       Log := #13#10 + '[请求方式]:' + 'WEBSERVICE/SOAP'
            + #13#10 + '[请求地址]:' + AContext.URL
            + #13#10 + '[请求头]:' + UTF8ToString(AContext.InHeaders).Replace(#13#10,'&')
-           + #13#10 + '[耗时]:' + IntToStr(StopTime - StartTime) + 'ms'
+           + #13#10 + '[耗时]:' + (StopTime - StartTime).ToString + 'ms'
            + #13#10 + '[入参]:' + Invalue
            + #13#10 + '[出参]:' + OutValue + #13#10;
       if aJson.TryParse(Outvalue) then
@@ -511,7 +514,7 @@ end;
 
 procedure TSynWebServer.onConnect(const Conn: THttpApiWebSocketConnection);
 begin
-  PostLog(llMessage,'New ConNecTionID='+InttoStr(Conn.index));
+  PostLog(llMessage,'New ConNecTionID='+Conn.index.ToString);
 end;
 
 procedure TSynWebServer.onDisconnect(const Conn: THttpApiWebSocketConnection;
@@ -520,7 +523,7 @@ var
   str: RawUTF8;
 begin
   SetString(str, pUtf8Char(aBuffer), aBufferSize);
-  PostLog(llMessage,'DisconnectedID='+InttoStr(Conn.index)+';Msg:'+UTF8ToString(Str));
+  PostLog(llMessage,'DisconnectedID='+Conn.index.ToString+';Msg:'+UTF8ToString(Str));
 end;
 
 procedure TSynWebServer.onMessage(const Conn: THttpApiWebSocketConnection;
@@ -558,8 +561,8 @@ begin
       Log := #13#10 + '[请求方式]:' + 'WebSocket'
            + #13#10 + '[请求地址]:/WSYXHIS'
            + #13#10 + '[请求头]:' //+ aHeader
-           + #13#10 + '[客户端ID]:' + IntToStr(Conn.Index)
-           + #13#10 + '[耗时]:' + IntToStr(StopTime - StartTime) + 'ms'
+           + #13#10 + '[客户端ID]:' + Conn.Index.ToString
+           + #13#10 + '[耗时]:' + (StopTime - StartTime).ToString + 'ms'
            + #13#10 + '[入参]:' + aBuff
            + #13#10 + '[出参]:' + OutValue + #13#10;
       if aJson.TryParse(OutValue) then

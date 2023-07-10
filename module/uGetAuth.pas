@@ -3,7 +3,7 @@ unit uGetAuth;
 
 interface
   //引用基础类
-  uses uPubMod,System.Classes;
+  uses uPubMod,System.Classes,Data.DB;
 
 
 //创建TPubMod的子类业务类-TAuth
@@ -73,30 +73,30 @@ begin
   aCToken := SQLiteQry.S['TokenCode'];
   aCUser := SQLiteQry.S['UserName'];
   aTime := SQLiteQry.I['TimeOut'];
+  //注册JWT
   aJWTIn := TJWTHS256.Create(UTF8Encode(HS256Key), 0, [], [], 30);
+  //授权JWT
+  aJWTOut := TJWTHS256.Create(UTF8Encode(HS256Key), 1,
+      [jrcIssuer, jrcSubject, jrcAudience, jrcIssuedAt,jrcJwtID],
+      [], aTime);
   aJWTIn.Options := [joHeaderParse, joAllowUnexpectedClaims];
   aJWTIn.Verify(UTF8Encode(aCToken), aJWTContent);
   try
     if not (aJWTContent.result = jwtValid) then
     begin
-      FCode := Ord(aJWTContent.result)+100;
+      FCode := Ord(aJWTContent.result);
       //FError := '['+aCUser+']授权验证失败['+TRttiEnumerationType.GetName<TJWTResult>(aJWTContent.result)+'],';
       Exit;
     end;
-    {if aJWTContent.result = jwtExpired then
-    begin
-      FError := '['+aCUser+']授权已到期！无法提供服务！请联系公司处理！';
-      Exit;
-    end;  }
-    aJWTOut := TJWTHS256.Create(UTF8Encode(HS256Key), 1,
-      [jrcIssuer, jrcSubject, jrcAudience, jrcIssuedAt,jrcJwtID],
-      [], aTime);
-    FJson.Add('Authorization',UTF8Decode(aJWTOut.Compute(['id:',Auth],
+    if aTime = 0 then
+      FJson.Add('Authorization',aCToken,jdtString)
+    else
+      FJson.Add('Authorization',UTF8ToString(aJWTOut.Compute(['id:',Auth],
         'YxEmr Server', aJWTContent.reg[jrcSubject], aCUser) ),jdtString);
     FResultData := FJson.AsJson;
   finally
     if FCode > 0 then
-      FError := '错误的注册信息！错误代码['+IntToStr(FCode)+']！' ;
+      FError := '错误的注册信息！'+TRttiEnumerationType.GetName<TJWTResultErr>(TJWTResultErr(FCode))+'！' ;
     aJWTOut.Free;
     aJWTIn.Free;
   end;
@@ -106,6 +106,7 @@ end;
 //注册子类TAuth
 initialization
   RegisterClassAlias(TAuth,'GetAuth');
+  AMethodName.Add('GetAuth','授权');
 finalization
   System.Classes.UnRegisterClass(TAuth)
 end.

@@ -3,7 +3,6 @@ object MainForm: TMainForm
   Top = 87
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'YxEmr'#24212#29992#26381#21153#22120
   ClientHeight = 111
   ClientWidth = 294
   Color = clBtnFace
@@ -18,7 +17,6 @@ object MainForm: TMainForm
   GlassFrame.SheetOfGlass = True
   Position = poScreenCenter
   OnActivate = FormActivate
-  OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnKeyDown = FormKeyDown
   TextHeight = 13

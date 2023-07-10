@@ -5,8 +5,9 @@ interface
 uses
   Winapi.Windows, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
-  Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Buttons, uConfig,
-  uFrmSQLConnect, Winapi.WinSock, TLhelp32, PsAPI,uFrmMQTTClient;
+  Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Buttons, uConfig,UpubFun,
+  uFrmSQLConnect, Winapi.WinSock, TLhelp32, PsAPI,uFrmMQTTClient,
+  Vcl.Samples.Spin;
 type
   TFrmSvrConfig = class(TForm)
     pnl2: TPanel;
@@ -37,6 +38,14 @@ type
     EdtIP: TEdit;
     chkSocket: TCheckBox;
     ckErr: TCheckBox;
+    ckAES: TCheckBox;
+    lbl4: TLabel;
+    edtWZUrl: TEdit;
+    lbl5: TLabel;
+    cbbip: TComboBox;
+    ckCache: TCheckBox;
+    se1: TSpinEdit;
+    lbl6: TLabel;
     procedure EdtWorkcountExit(Sender: TObject);
     procedure ckReBootClick(Sender: TObject);
     procedure BtnModClick(Sender: TObject);
@@ -50,12 +59,13 @@ type
     procedure EdtReBootTExit(Sender: TObject);
     procedure ckHTTPSClick(Sender: TObject);
     procedure ckSYSLOGClick(Sender: TObject);
+    procedure ckAESClick(Sender: TObject);
+    procedure ckCacheClick(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
     SysPort:string;
-    YxSCKTINI: string;
     procedure ReadConfig;
     function BSTATUS(ISTATUS: Boolean): boolean;
   end;
@@ -95,7 +105,7 @@ begin
   CKRUN.CHECKED := ini.Auto;
   CKAUTORUN.CHECKED := ini.AutoRun;
   CKREBOOT.CHECKED := ini.ReBoot;
-  EdtReBootT.text := IntToStr(ini.ReBootT);
+  EdtReBootT.text := ini.ReBootT.ToString;
   CKMsg.CHECKED := ini.MsgLog;
   CKSQL.CHECKED := ini.SQLLog;
   CKErr.CHECKED := ini.ErrLog;
@@ -105,13 +115,23 @@ begin
     RbHTTP.CHECKED := True
   else
     RbWEB.CHECKED := True;
-  EdtWorkCount.text := IntToStr(ini.Pools);
+  EdtWorkCount.text := ini.Pools.ToString;
   EdtPort.Text := ini.Port;
-  EdtSize.Text := IntToStr(ini.LogSize);
+  EdtSize.Text := ini.LogSize.ToString;
   EdtIP.Text := ini.SysLogIP;
   ckSYSLOG.Checked := ini.BSysLog;
-  SysPort := IntToStr(ini.SysLogPort);
+  SysPort := ini.SysLogPort.ToString;
   chkSocket.Checked := ini.Socket;
+  ckAES.Checked := ini.AES;
+  edtWZUrl.Text := ini.WZUrl;
+  if Ini.IP = '' then
+  begin
+    cbbip.ItemIndex := cbbip.Items.IndexOf(GetLocalIP(False));
+  end
+  else
+   cbbip.ItemIndex := cbbip.Items.IndexOf(Ini.IP);
+  ckCache.Checked := Ini.UseCache;
+  se1.Value := Ini.LogMax;
 end;
 
 procedure TFrmSvrConfig.BtnCancelClick(Sender: TObject);
@@ -303,7 +323,12 @@ begin
     ini.Port := '8080';
   ini.LogSize :=  StrToIntDef(EdtSize.Text,10);
   ini.Socket := chkSocket.CHECKED;
-  ini.SaveToFile(YxSCKTINI);
+  Ini.AES := ckAES.Checked;
+  ini.WZUrl := edtWZUrl.Text;
+  Ini.IP := cbbip.Text;
+  Ini.UseCache := ckCache.Checked;
+  Ini.LogMax := se1.Value;
+  SaveToFile;
 
   MessageBox(Handle, '配置保存成功！请重启程序生效！', '提示', MB_ICONASTERISK and MB_ICONINFORMATION);
   ReadConfig;
@@ -319,6 +344,18 @@ begin
   finally
     Free;
   end;
+end;
+
+procedure TFrmSvrConfig.ckAESClick(Sender: TObject);
+begin
+//  if ckAES.Checked then
+//    MessageBox(Handle, '勾选此项时接口所有的数据传输将加密！'+#10#13+'此功能用于卫键委安全要求，如无要求，请不要勾选！', '提示', MB_ICONASTERISK and MB_ICONINFORMATION);
+end;
+
+procedure TFrmSvrConfig.ckCacheClick(Sender: TObject);
+begin
+//  if ckCache.Checked then
+//    MessageBox(Handle, '勾选此项时需要在本机启动Redis服务！', '提示', MB_ICONASTERISK and MB_ICONINFORMATION);
 end;
 
 procedure TFrmSvrConfig.ckHTTPSClick(Sender: TObject);
@@ -371,7 +408,6 @@ begin
     EdtSize.text := '10';
   if StrToInt(EdtSize.text) <= 10 then
     EdtSize.text := '10';
-  EdtSize.text := inttostr(strtoint(EdtSize.text));
 end;
 
 procedure TFrmSvrConfig.EdtWorkcountExit(Sender: TObject);
@@ -382,13 +418,12 @@ begin
     EdtWorkCount.text := '32';
   if StrToInt(EdtWorkCount.text) > 256 then
     EdtWorkCount.text := '256';
-  EdtWorkCount.text := inttostr(strtoint(EdtWorkCount.text));
 end;
 
 procedure TFrmSvrConfig.FormShow(Sender: TObject);
 begin
   BSTATUS(false);
-  YxSCKTINI := ChangeFileExt(ParamStr(0), '.ini');
+  cbbip.Items.Text := GetIPList;
   ReadConfig;
   {$IFDEF Socket}
   //chkSocket.Enabled := True;

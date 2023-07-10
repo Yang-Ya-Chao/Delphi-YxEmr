@@ -5,8 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Buttons,
-  Vcl.ExtCtrls,Data.DB, Vcl.DBGrids,Snowflake,
-  uEncry, Vcl.Clipbrd,UpubFun,Vcl.Menus,Rtti,SynCrypto,
+  Vcl.ExtCtrls,Data.DB, Vcl.DBGrids,Snowflake,SYSTEM.SyncObjs,
+  uEncry, Vcl.Clipbrd,UpubFun,Vcl.Menus,Rtti,SynCrypto,uPubMod,
   FireDAC.Comp.Client,FireDAC.DApt,uConfig,uObjPools,uQueryHelper, Vcl.Grids;
 const
   InputBoxMessage = WM_USER + 200;
@@ -19,24 +19,26 @@ type
   TFrmAuthManage = class(TForm)
     pnl1: TPanel;
     pnl3: TPanel;
-    pnl2: TPanel;
     btnAdd: TBitBtn;
     btnMof: TBitBtn;
     btnDel: TBitBtn;
     btnSave: TBitBtn;
-    lblUser: TLabel;
-    edtUser: TEdit;
     grp1: TGroupBox;
     btnCanl: TBitBtn;
-    Grid1: TDBGrid;
     ds1: TDataSource;
-    GB1: TRadioGroup;
     pm1: TPopupMenu;
     N1: TMenuItem;
     oken1: TMenuItem;
     btnrefresh: TButton;
-    edtTime: TEdit;
+    spl1: TSplitter;
+    pnl2: TPanel;
+    Grid1: TDBGrid;
+    pnl4: TPanel;
+    GB1: TRadioGroup;
+    lblUser: TLabel;
+    edtUser: TEdit;
     lblUser1: TLabel;
+    edtTime: TEdit;
     procedure btnAddClick(Sender: TObject);
     procedure btnMofClick(Sender: TObject);
     procedure btnCanlClick(Sender: TObject);
@@ -86,7 +88,7 @@ begin
   if not CheckGLY then Exit;
   ILX := 0;
   var IID := IdGenerator.NextId();
-  CID := IntToStr(IID);
+  CID := IID.ToString;
   Enable(True);
   Reset;
 end;
@@ -124,6 +126,7 @@ end;
 
 procedure TFrmAuthManage.btnMofClick(Sender: TObject);
 begin
+  if Qry.IsEmpty then Exit;
   if not CheckGLY then Exit;
   ILX := 1;
   Enable(True);
@@ -182,7 +185,7 @@ begin
     if SAuth <> '' then
       SAuth := SAuth+'|';
     if Checkboxs[i].Checked then
-      SAuth := SAuth+Checkboxs[i].Caption;
+      SAuth := SAuth+Checkboxs[i].Hint;
   end;
   //SAuth := AuthList.Text.Replace(#13#10,'|').Replace(#0,'');
   Invalue := EnCode(CID+'=|'+SAuth+'|');
@@ -191,7 +194,7 @@ begin
     [], GetRegisTime*24*60);
   try
     Token := UTF8Decode(LJWT.Compute(['id:',CID],
-        'YxEmr Server', SAuth, Trim(edtuser.Text)));
+        FExe+' Server', SAuth, Trim(edtuser.Text)));
   finally
     LJWT.Free;
   end;
@@ -249,7 +252,7 @@ begin
     edtTime.Text := TFDQuery(DataSet).S['TimeOut'];
     CID := TFDQuery(DataSet).S['IID'];
     AuthCode := DeCode(TFDQuery(DataSet).S['AuthCode']);
-    sTmp := Copy(AuthCode,1,Pos('=',AuthCode)-1);
+    sTmp := AuthCode.Substring(0,Pos('=',AuthCode)-1);;
     if CID <> sTmp then
     begin
       MessageBox(Handle, PChar('授权码['+CID+']权限非法！请重置！'), '错误', MB_ICONERROR);
@@ -276,26 +279,40 @@ const
 procedure TFrmAuthManage.FormCreate(Sender: TObject);
 var
   i:integer;
-  Method:String;
 begin
 
   DB := SQLiteDBPool.GetObj;
   Qry := TFDQuery.Create(nil);
   Qry.Connection := DB;
   MethodList := TStringList.Create;
-  MethodList.Text := Ini.Method.Replace('|',#13#10);
+  var tmplist := TStringList.Create;
+  ReportClassGroups(tmplist);
+  var tmp := tmplist.Text.Replace(' ','');
+  var mmp := Copy(tmp,Pos('ClassAliases',tmp) + Length('ClassAliases'),
+                      Pos('Group[1]-Active:False',tmp) - Pos('ClassAliases',tmp)-Length('ClassAliases'));
+  tmplist.Text := mmp.TrimLeft;
+  for I := 0 to tmplist.Count-1 do
+    MethodList.add(tmplist.Names[i]);
+  //MethodList.Text := Ini.Method.Replace('|',#13#10);
   SetLength(Checkboxs,MethodList.Count);
   iPerLine := grp1.ClientWidth div (iWidth+iWtoW);
+  var Name:string;
   for i := 0 to MethodList.Count-1 do
   begin
     Checkboxs[i]:=TCheckBox.Create(Self);
     Checkboxs[i].Parent:=grp1;        //组  GroupBox控件名
     Checkboxs[i].OnClick:=CheckClick;
     Checkboxs[i].Tag:=i;
-    Checkboxs[i].Caption:=MethodList[i];
+    Checkboxs[i].ShowHint := True;
+    if AMethodName.TryGetValue(MethodList[i],Name) then
+      Checkboxs[i].Caption:=Name
+    else
+      Checkboxs[i].Caption := MethodList[i];
+    Checkboxs[i].Hint := MethodList[i];
     Checkboxs[i].Top:= iHtoH + (30+iHtoH) * ((i+1) div iPerLine - integer(((i+1) mod iPerLine)=0));
     Checkboxs[i].Left:= iWtoW + (iWidth+iWtoW) * ((i) mod iPerLine);
   end;
+  tmplist.free;
 end;
 
 procedure TFrmAuthManage.FormDestroy(Sender: TObject);

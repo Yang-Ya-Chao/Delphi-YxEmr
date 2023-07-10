@@ -3,7 +3,7 @@ object FrmRegist: TFrmRegist
   Top = 0
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
-  Caption = #27880#20876#30721#35831#32852#31995'QQ******'#33719#21462
+  Caption = #27880#20876#30721#35831#32852#31995'QQ2405414352'#33719#21462
   ClientHeight = 90
   ClientWidth = 416
   Color = clBtnFace
@@ -16,6 +16,7 @@ object FrmRegist: TFrmRegist
   Position = poScreenCenter
   OnCreate = FormCreate
   OnShow = FormShow
+  PixelsPerInch = 96
   TextHeight = 17
   object lbl1: TLabel
     Left = 36
@@ -36,7 +37,9 @@ object FrmRegist: TFrmRegist
     Top = 54
     Width = 189
     Height = 25
+    HelpType = htKeyword
     TabOrder = 0
+    OnChange = EdtRegistChange
   end
   object EdtCode: TEdit
     Left = 100
